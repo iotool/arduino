@@ -1,7 +1,7 @@
 // ATmega328P 3-axis unipolar stepper driver
 // https://github.com/iotool/arduino/atmega328p/28byj48-unipolar-3axis-stepper-driver
-// Version 1.0 by RoHa 2017-05-10 by 
-
+// Version 1.0 by RoHa 2017-05-10
+// 
 // hardware   : standalone chip ATmega328P
 // sourcecode : Arduino IDE 1.6.8
 // board      : Arduino/Genuino Uno (ATmega328P)
