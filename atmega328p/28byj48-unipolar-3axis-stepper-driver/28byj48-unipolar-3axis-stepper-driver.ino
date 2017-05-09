@@ -204,7 +204,7 @@ void signalLedBlink() {
         gLedBlinkTimeout = gUptimeCurrentMillis + CFG_LEDBLINK_WORK_PULSE;
       }
     } else {
-      // turn led on
+      // turn led off
       SET_LED_FASTLOW;
       gLedBlinkStatus = FLG_LEDBLINK_STATUS_LOW;
       // set new timeout
