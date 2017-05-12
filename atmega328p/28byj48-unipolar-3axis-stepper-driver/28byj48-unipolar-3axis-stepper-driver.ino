@@ -1,6 +1,4 @@
 // ATmega328P 3-axis unipolar stepper driver
-// https://github.com/iotool/arduino/atmega328p/28byj48-unipolar-3axis-stepper-driver
-// Version 1.0 by RoHa 2017-05-10
 // 
 // hardware   : standalone chip ATmega328P
 // sourcecode : Arduino IDE 1.6.8
@@ -20,7 +18,7 @@
 // Mostly you will get UNL2003 based shields to drive 28BYJ-48 stepper motors by four pins.
 // The X and Y axis are controlled by PORTD (pin 0..7) and Z axis by PORTB (pin 8..12).
 // 
-// The pulse wide for each step must be greater than 500 us and the minimum interval should be 3 ms.
+// The pulse wide for each step must be greater than 250 us and the minimum interval should be 3 ms (333 MHz).
 // 
 // 
 //                       ATmega328P             
@@ -48,29 +46,22 @@
 //  11 L11  D.5   5  output     AxisY_IN2
 //  12 L12  D.6   6  output     AxisY_IN3
 //  13 L13  D.7   7  output     AxisY_IN4
-//  14 L14  B.0   8  output     POWER
+//  14 L14  B.0   8  output     
 //  15 R14  B.1   9  output     AxisZ_IN1
 //  16 R13  B.2  10  output     AxisZ_IN2
 //  17 R12  B.3  11  output     AxisZ_IN3
 //  18 R11  B.4  12  output     AxisZ_IN4
-//  19 R10  B.5  13  output     LED
+//  19 R10  B.5  13  output     
 //  23 R06  C.0  A0  in_pullup  GRBL_StepX
 //  24 R05  C.1  A1  in_pullup  GRBL_StepY
 //  25 R04  C.2  A2  in_pullup  GRBL_StepZ
 //  26 R03  C.3  A3  in_pullup  GRBL_DirX
 //  27 R02  C.4  A4  in_pullup  GRBL_DirY
 //  28 R01  C.5  A5  in_pullup  GRBL_DirZ
-
-// --- config ---
-
-#define CFG_LEDBLINK_IDLE_INTERVAL 900   /* ms idle mode - blink every interval millis (default 900) */
-#define CFG_LEDBLINK_IDLE_PULSE 100      /* ms idle mode - turn led on for millis (default 100) */
-#define CFG_LEDBLINK_WORK_INTERVAL 200   /* ms work mode - blink every interval millis (default 200) */
-#define CFG_LEDBLINK_WORK_PULSE 800      /* ms work mode - turn led on for millis (default 800) */
-#define CFG_AXIS_PULSE_TIMEOUT 4         /* ms turn off motor after millis (default 4) */
-// #define CFG_HALF_STEPS 1              /* use half steps / slow speed (disable = comment) */
-
-// --- pinout ---
+// 
+//  history
+//  2017-05-11  RoHa  optimized for 250 us pulse wide
+// 
 
 #define PIN_STEP_X 14 /* ADC0 PortC.0 IC23(R06) */
 #define PIN_STEP_Y 15 /* ADC1 PortC.1 IC24(R05) */
@@ -90,13 +81,9 @@
 #define PIN_IN2_Z  10 /* PN10 PortB.2 IC16(R13) */
 #define PIN_IN3_Z  11 /* PN11 PortB.3 IC17(R12) */
 #define PIN_IN4_Z  12 /* PN12 PortB.4 IC18(R11) */
-#define PIN_POWER   8 /* PIN8 PortB.0 IC14(L14) */
-#define PIN_LED    13 /* PN13 PortB.5 IC19(R10) */
+#define PIN_POWER   8 /* PIN8 PortB.0 IC14(L14) - not used */
+#define PIN_LED    13 /* PN13 PortB.5 IC19(R10) - not used */
 
-// --- fast pinmode ---
-
-#define SET_LED_FASTLOW            PORTB &= ~B00100000  /* digitalWrite(13,LOW); */
-#define SET_LED_FASTHIGH           PORTB |= B00100000   /* digitalWrite(13,HIGH); */
 #define SET_AXIS_X_FASTLOW         PORTD &= ~B00001111  /* digitalWrite(0+1+2+3,LOW); */
 #define SET_AXIS_Y_FASTLOW         PORTD &= ~B11110000  /* digitalWrite(4+5+6+7,LOW); */
 #define SET_AXIS_Z_FASTLOW         PORTB &= ~B00011110  /* digitalWrite(9+10+11+12,LOW); */
@@ -125,54 +112,6 @@
 #define SET_AXIS_Z_STEP7_FASTHIGH  PORTB |= B00010010   /* digitalWrite(,HIGH); */
 #define SET_AXIS_Z_STEP8_FASTHIGH  PORTB |= B00000010   /* digitalWrite(,HIGH); */
 
-// --- flags ---
-
-#define FLG_LEDBLINK_MODE_IDLE 1    /* idle mode - no driver signals */
-#define FLG_LEDBLINK_MODE_WORK 2    /* work mode - get driver signals */
-#define FLG_LEDBLINK_STATUS_LOW 1   /* led off - pin low */
-#define FLG_LEDBLINK_STATUS_HIGH 2  /* led on - pin high */
-
-#define FLG_INPUT_MODE_IDLE 1       /* idle mode - no driver signals */
-#define FLG_INPUT_MODE_WORK 2       /* work mode - get driver signals */
-#define FLG_OUTPUT_MODE_IDLE 1      /* idle mode - no driver signals send */
-#define FLG_OUTPUT_MODE_STEP1 2     /* step1 mode - driver signals IN1+2 send */
-#define FLG_OUTPUT_MODE_STEP2 3     /* step2 mode - driver signals IN2 send */
-#define FLG_OUTPUT_MODE_STEP3 4     /* step3 mode - driver signals IN2+3 send */
-#define FLG_OUTPUT_MODE_STEP4 5     /* step4 mode - driver signals IN3 send */
-#define FLG_OUTPUT_MODE_STEP5 6     /* step5 mode - driver signals IN3+4 send */
-#define FLG_OUTPUT_MODE_STEP6 7     /* step6 mode - driver signals IN4 send */
-#define FLG_OUTPUT_MODE_STEP7 8     /* step7 mode - driver signals IN4+1 send */
-#define FLG_OUTPUT_MODE_STEP8 9     /* step8 mode - driver signals IN1 send */
-
-// --- globals ---
-
-unsigned long gUptimeCurrentMillis = 0;
-
-byte gLedBlinkMode = FLG_LEDBLINK_MODE_IDLE;
-byte gLedBlinkStatus = FLG_LEDBLINK_STATUS_LOW;
-unsigned long gLedBlinkTimeout = 0;
-
-byte gDriverCurrentStatus = FLG_INPUT_MODE_IDLE;
-uint8_t gDriverCurrentPinc = 0;
-byte gDriverCurrentStepX = 0;
-byte gDriverCurrentStepY = 0;
-byte gDriverCurrentStepZ = 0;
-byte gDriverCurrentDirX = 0;
-byte gDriverCurrentDirY = 0;
-byte gDriverCurrentDirZ = 0;
-byte gDriverLastStepX = 0;
-byte gDriverLastStepY = 0;
-byte gDriverLastStepZ = 0;
-byte gDriverLastDirX = 0;
-byte gDriverLastDirY = 0;
-byte gDriverLastDirZ = 0;
-byte gDriverOutputModeX = FLG_OUTPUT_MODE_IDLE;
-byte gDriverOutputModeY = FLG_OUTPUT_MODE_IDLE;
-byte gDriverOutputModeZ = FLG_OUTPUT_MODE_IDLE;
-unsigned long gDriverTimeoutX = 0;
-unsigned long gDriverTimeoutY = 0;
-unsigned long gDriverTimeoutZ = 0;
-
 void setup() {
   // define pinmode (use slow arduino code for better understanding)
   pinMode(PIN_STEP_X,INPUT_PULLUP); pinMode(PIN_STEP_Y,INPUT_PULLUP); pinMode(PIN_STEP_Z,INPUT_PULLUP);  
@@ -185,234 +124,162 @@ void setup() {
   pinMode(PIN_LED,OUTPUT);
 }
 
-void currentUptime() {
-  // get uptime since power on
-  gUptimeCurrentMillis = millis();
-}
+#define TIMEINTERVAL_1000MS 2000 /* 8 MHz */
+#define TIMEINTERVAL_100MS 200 /* 8 MHz */
+#define TIMEINTERVAL_10MS 20 /* 8 MHz */
+#define TIMEINTERVAL_5MS 10 /* 8 MHz */
+#define TIMEINTERVAL_4MS 8 /* 8 MHz */
+#define TIMEINTERVAL_3MS 6 /* 8 MHz */
+#define TIMEINTERVAL_2MS 4 /* 8 MHz */
+#define TIMEINTERVAL_1MS 2 /* 8 MHz */
 
-void signalLedBlink() {
-  // switch led after timeout
-  if (gLedBlinkTimeout < gUptimeCurrentMillis) {
-    if (gLedBlinkStatus == FLG_LEDBLINK_STATUS_LOW) {
-      // turn led on
-      SET_LED_FASTHIGH;
-      gLedBlinkStatus = FLG_LEDBLINK_STATUS_HIGH;
-      // set new timeout
-      if (gLedBlinkMode == FLG_LEDBLINK_MODE_IDLE) {
-        gLedBlinkTimeout = gUptimeCurrentMillis + CFG_LEDBLINK_IDLE_PULSE;
-      } else {
-        gLedBlinkTimeout = gUptimeCurrentMillis + CFG_LEDBLINK_WORK_PULSE;
-      }
-    } else {
-      // turn led off
-      SET_LED_FASTLOW;
-      gLedBlinkStatus = FLG_LEDBLINK_STATUS_LOW;
-      // set new timeout
-      if (gLedBlinkMode == FLG_LEDBLINK_MODE_IDLE) {
-        gLedBlinkTimeout = gUptimeCurrentMillis + CFG_LEDBLINK_IDLE_INTERVAL;
-      } else {
-        gLedBlinkTimeout = gUptimeCurrentMillis + CFG_LEDBLINK_WORK_INTERVAL;
-      }
-    }
-  }
-}
+unsigned long gUptimeCurrentMillis = 0;
 
-void inputDriver() {
-  // read adc input pins
-  gDriverCurrentPinc = PINC;                                       // read all pins at once
-  gDriverCurrentPinc = ~gDriverCurrentPinc;                        // invert input_pullup
-  gDriverCurrentStepX = bitRead(gDriverCurrentPinc,PIN_STEP_X-14); // bit 0 at port c
-  gDriverCurrentStepY = bitRead(gDriverCurrentPinc,PIN_STEP_Y-14); // bit 1 at port c
-  gDriverCurrentStepZ = bitRead(gDriverCurrentPinc,PIN_STEP_Z-14); // bit 2 at port c
-  gDriverCurrentDirX  = bitRead(gDriverCurrentPinc,PIN_DIR_X-14);  // bit 3 at port c
-  gDriverCurrentDirY  = bitRead(gDriverCurrentPinc,PIN_DIR_Y-14);  // bit 4 at port c
-  gDriverCurrentDirZ  = bitRead(gDriverCurrentPinc,PIN_DIR_Z-14);  // bit 5 at port c
-  // exists signal
-  gDriverCurrentStatus = FLG_INPUT_MODE_IDLE;
-  if (gDriverCurrentStepX == 1) gDriverCurrentStatus = FLG_INPUT_MODE_WORK;
-  if (gDriverCurrentStepY == 1) gDriverCurrentStatus = FLG_INPUT_MODE_WORK;
-  if (gDriverCurrentStepZ == 1) gDriverCurrentStatus = FLG_INPUT_MODE_WORK;
-  // change led blink mode
-  if (gDriverCurrentStatus == FLG_INPUT_MODE_IDLE) {
-    gLedBlinkMode = FLG_LEDBLINK_MODE_IDLE;
-  } else {
-    gLedBlinkMode = FLG_LEDBLINK_MODE_WORK;
-  }
-}
+uint8_t gDriverCurrentPinC = 0;
+uint8_t gDriverLastPinC = 0;
+uint8_t gDriverCurrentXYZ = 0;
 
-void outputDriver() {
-  // signal exists
-  if (gDriverCurrentStatus == FLG_INPUT_MODE_WORK) {
-    // X - detect pulse begin
-    if (gDriverCurrentStepX > gDriverLastStepX) {
-      SET_AXIS_X_FASTLOW;
-      if (gDriverCurrentDirX == 0) {
-        // move forward
-        switch(gDriverOutputModeX) {
-        #ifdef CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_X_STEP2_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP2; break;
-          case FLG_OUTPUT_MODE_STEP2: SET_AXIS_X_STEP3_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_X_STEP4_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP4; break;
-          case FLG_OUTPUT_MODE_STEP4: SET_AXIS_X_STEP5_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_X_STEP6_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP6; break;
-          case FLG_OUTPUT_MODE_STEP6: SET_AXIS_X_STEP7_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_X_STEP8_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP8; break;
-          case FLG_OUTPUT_MODE_STEP8: SET_AXIS_X_STEP1_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeX = FLG_OUTPUT_MODE_STEP8; break;
-        #else // CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_X_STEP3_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_X_STEP5_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_X_STEP7_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_X_STEP1_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeX = FLG_OUTPUT_MODE_STEP7; break;
-        #endif
-        } 
-      } else {
-        // move backward
-        switch(gDriverOutputModeX) {
-        #ifdef CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_X_STEP8_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP8; break;
-          case FLG_OUTPUT_MODE_STEP2: SET_AXIS_X_STEP7_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_X_STEP6_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP6; break;
-          case FLG_OUTPUT_MODE_STEP4: SET_AXIS_X_STEP5_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_X_STEP4_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP4; break;
-          case FLG_OUTPUT_MODE_STEP6: SET_AXIS_X_STEP3_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_X_STEP2_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP2; break;
-          case FLG_OUTPUT_MODE_STEP8: SET_AXIS_X_STEP1_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeX = FLG_OUTPUT_MODE_STEP8; break;
-        #else // CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_X_STEP7_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_X_STEP1_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP1; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_X_STEP3_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_X_STEP5_FASTHIGH; gDriverOutputModeX = FLG_OUTPUT_MODE_STEP5; break;
-          default: gDriverOutputModeX = FLG_OUTPUT_MODE_STEP7; break;
-        #endif
-        } 
-      }
-      gDriverTimeoutX = gUptimeCurrentMillis + CFG_AXIS_PULSE_TIMEOUT;      
-    }
-    // Y - detect pulse begin
-    if (gDriverCurrentStepY > gDriverLastStepY) {
-      SET_AXIS_Y_FASTLOW;
-      if (gDriverCurrentDirY == 0) {
-        // move forward
-        switch(gDriverOutputModeY) {
-        #ifdef CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Y_STEP2_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP2; break;
-          case FLG_OUTPUT_MODE_STEP2: SET_AXIS_Y_STEP3_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Y_STEP4_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP4; break;
-          case FLG_OUTPUT_MODE_STEP4: SET_AXIS_Y_STEP5_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Y_STEP6_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP6; break;
-          case FLG_OUTPUT_MODE_STEP6: SET_AXIS_Y_STEP7_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Y_STEP8_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP8; break;
-          case FLG_OUTPUT_MODE_STEP8: SET_AXIS_Y_STEP1_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeY = FLG_OUTPUT_MODE_STEP8; break;
-        #else // CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Y_STEP3_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Y_STEP5_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Y_STEP7_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Y_STEP1_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeY = FLG_OUTPUT_MODE_STEP7; break;
-        #endif
-        } 
-      } else {
-        // move backward
-        switch(gDriverOutputModeY) {
-        #ifdef CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Y_STEP8_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP8; break;
-          case FLG_OUTPUT_MODE_STEP2: SET_AXIS_Y_STEP7_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Y_STEP6_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP6; break;
-          case FLG_OUTPUT_MODE_STEP4: SET_AXIS_Y_STEP5_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Y_STEP4_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP4; break;
-          case FLG_OUTPUT_MODE_STEP6: SET_AXIS_Y_STEP3_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Y_STEP2_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP2; break;
-          case FLG_OUTPUT_MODE_STEP8: SET_AXIS_Y_STEP1_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeY = FLG_OUTPUT_MODE_STEP8; break;
-        #else // CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Y_STEP7_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Y_STEP1_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP1; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Y_STEP3_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Y_STEP5_FASTHIGH; gDriverOutputModeY = FLG_OUTPUT_MODE_STEP5; break;
-          default: gDriverOutputModeY = FLG_OUTPUT_MODE_STEP7; break;
-        #endif
-        } 
-      }
-      gDriverTimeoutY = gUptimeCurrentMillis + CFG_AXIS_PULSE_TIMEOUT;      
-    }
-    // Z - detect pulse begin
-    if (gDriverCurrentStepZ > gDriverLastStepZ) {
-      SET_AXIS_Z_FASTLOW;
-      if (gDriverCurrentDirZ == 0) {
-        // move forward
-        switch(gDriverOutputModeZ) {
-        #ifdef CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Z_STEP2_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP2; break;
-          case FLG_OUTPUT_MODE_STEP2: SET_AXIS_Z_STEP3_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Z_STEP4_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP4; break;
-          case FLG_OUTPUT_MODE_STEP4: SET_AXIS_Z_STEP5_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Z_STEP6_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP6; break;
-          case FLG_OUTPUT_MODE_STEP6: SET_AXIS_Z_STEP7_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Z_STEP8_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP8; break;
-          case FLG_OUTPUT_MODE_STEP8: SET_AXIS_Z_STEP1_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP8; break;
-        #else // CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Z_STEP3_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Z_STEP5_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Z_STEP7_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Z_STEP1_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP7; break;
-        #endif
-        } 
-      } else {
-        // move backward
-        switch(gDriverOutputModeZ) {
-        #ifdef CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Z_STEP8_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP8; break;
-          case FLG_OUTPUT_MODE_STEP2: SET_AXIS_Z_STEP7_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Z_STEP6_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP6; break;
-          case FLG_OUTPUT_MODE_STEP4: SET_AXIS_Z_STEP5_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP5; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Z_STEP4_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP4; break;
-          case FLG_OUTPUT_MODE_STEP6: SET_AXIS_Z_STEP3_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Z_STEP2_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP2; break;
-          case FLG_OUTPUT_MODE_STEP8: SET_AXIS_Z_STEP1_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP1; break;
-          default: gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP8; break;
-        #else // CFG_HALF_STEPS
-          case FLG_OUTPUT_MODE_STEP1: SET_AXIS_Z_STEP7_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP7; break;
-          case FLG_OUTPUT_MODE_STEP3: SET_AXIS_Z_STEP1_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP1; break;
-          case FLG_OUTPUT_MODE_STEP5: SET_AXIS_Z_STEP3_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP3; break;
-          case FLG_OUTPUT_MODE_STEP7: SET_AXIS_Z_STEP5_FASTHIGH; gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP5; break;
-          default: gDriverOutputModeZ = FLG_OUTPUT_MODE_STEP7; break;
-        #endif
-        } 
-      }
-      gDriverTimeoutZ = gUptimeCurrentMillis + CFG_AXIS_PULSE_TIMEOUT;      
-    }
-  }
-  // timeout (maximal pulse wide)
-  if (gDriverTimeoutX < gUptimeCurrentMillis) {
-    SET_AXIS_X_FASTLOW;
-    gDriverTimeoutX = gUptimeCurrentMillis + CFG_AXIS_PULSE_TIMEOUT;
-  }
-  if (gDriverTimeoutY < gUptimeCurrentMillis) {
-    SET_AXIS_Y_FASTLOW;
-    gDriverTimeoutY = gUptimeCurrentMillis + CFG_AXIS_PULSE_TIMEOUT;
-  }
-  if (gDriverTimeoutZ < gUptimeCurrentMillis) {
-    SET_AXIS_Z_FASTLOW;
-    gDriverTimeoutZ = gUptimeCurrentMillis + CFG_AXIS_PULSE_TIMEOUT;
-  }
-  // remember current state to compare at next round
-  gDriverLastStepX = gDriverCurrentStepX;   
-  gDriverLastStepY = gDriverCurrentStepY;   
-  gDriverLastStepZ = gDriverCurrentStepZ;   
-  gDriverLastDirX  = gDriverCurrentDirX;    
-  gDriverLastDirY  = gDriverCurrentDirY;    
-  gDriverLastDirZ  = gDriverCurrentDirZ;    
-}
+byte gDriverCurrentStepX = 0;
+byte gDriverCurrentStepY = 0;
+byte gDriverCurrentStepZ = 0;
+byte gDriverCurrentDirX = 0;
+byte gDriverCurrentDirY = 0;
+byte gDriverCurrentDirZ = 0;
+
+byte gDriverLastStepX = 0;
+byte gDriverLastStepY = 0;
+byte gDriverLastStepZ = 0;
+byte gDriverLastDirX = 0;
+byte gDriverLastDirY = 0;
+byte gDriverLastDirZ = 0;
+
+#define STEP_NEXT 64
+#define STEP_1 0
+#define STEP_2 64
+#define STEP_3 128
+#define STEP_4 192
+
+unsigned long gDriverOutputTimeout = 0;      
+byte gDriverOutputStepX = STEP_1;
+byte gDriverOutputStepY = STEP_1;
+byte gDriverOutputStepZ = STEP_1;
 
 void loop() {
-  currentUptime();   // need for timeout handling 
-  signalLedBlink();  // display driver status
-  inputDriver();     // read input signals from GRBL
-  outputDriver();    // write output signals to 28BYJ48
+
+  // --- uptime ---
+  gUptimeCurrentMillis = millis();
+  
+  // --- fast read ---
+  gDriverCurrentPinC = PINC;                                   // fast read
+  gDriverCurrentPinC &= ~B11000000;                            // ignore pin 6..7
+  if (gDriverCurrentPinC != gDriverLastPinC) {                 // pins changed
+    // --- new signal ---
+    gDriverLastPinC = gDriverCurrentPinC;
+    gDriverCurrentXYZ = gDriverCurrentPinC & B00000111;        // one or more step signal
+    if (gDriverCurrentXYZ > 0) {
+      // --- step signal found ---
+      gDriverLastStepX = gDriverCurrentStepX;   
+      gDriverLastStepY = gDriverCurrentStepY;   
+      gDriverLastStepZ = gDriverCurrentStepZ;   
+      gDriverLastDirX  = gDriverCurrentDirX;    
+      gDriverLastDirY  = gDriverCurrentDirY;    
+      gDriverLastDirZ  = gDriverCurrentDirZ;    
+      gDriverCurrentStepX = bitRead(gDriverCurrentPinC,PIN_STEP_X-14); // bit 0 at port c
+      gDriverCurrentStepY = bitRead(gDriverCurrentPinC,PIN_STEP_Y-14); // bit 1 at port c
+      gDriverCurrentStepZ = bitRead(gDriverCurrentPinC,PIN_STEP_Z-14); // bit 2 at port c
+      gDriverCurrentDirX  = bitRead(gDriverCurrentPinC,PIN_DIR_X-14);  // bit 3 at port c
+      gDriverCurrentDirY  = bitRead(gDriverCurrentPinC,PIN_DIR_Y-14);  // bit 4 at port c
+      gDriverCurrentDirZ  = bitRead(gDriverCurrentPinC,PIN_DIR_Z-14);  // bit 5 at port c
+      // --- move ---
+      if (gDriverCurrentStepX > gDriverLastStepX) {
+        // --- x axis goes high ---
+        if (gDriverCurrentDirX == 0) {
+          gDriverOutputStepX += STEP_NEXT;
+        } else {
+          gDriverOutputStepX -= STEP_NEXT;
+        }
+        SET_AXIS_X_FASTLOW;
+        if (gDriverOutputStepX == STEP_1) { SET_AXIS_X_STEP1_FASTHIGH; }
+        if (gDriverOutputStepX == STEP_2) { SET_AXIS_X_STEP3_FASTHIGH; }
+        if (gDriverOutputStepX == STEP_3) { SET_AXIS_X_STEP5_FASTHIGH; }
+        if (gDriverOutputStepX == STEP_4) { SET_AXIS_X_STEP7_FASTHIGH; }
+      }
+      if (gDriverCurrentStepY > gDriverLastStepY) {
+        // --- y axis goes high ---
+        if (gDriverCurrentDirY == 0) {
+          gDriverOutputStepY += STEP_NEXT;
+        } else {
+          gDriverOutputStepY -= STEP_NEXT;
+        }
+        SET_AXIS_Y_FASTLOW;
+        if (gDriverOutputStepY == STEP_1) { SET_AXIS_Y_STEP1_FASTHIGH; }
+        if (gDriverOutputStepY == STEP_2) { SET_AXIS_Y_STEP3_FASTHIGH; }
+        if (gDriverOutputStepY == STEP_3) { SET_AXIS_Y_STEP5_FASTHIGH; }
+        if (gDriverOutputStepY == STEP_4) { SET_AXIS_Y_STEP7_FASTHIGH; }
+      }
+      if (gDriverCurrentStepZ > gDriverLastStepZ) {
+        // --- z axis goes high ---
+        if (gDriverCurrentDirZ == 0) {
+          gDriverOutputStepZ += STEP_NEXT;
+        } else {
+          gDriverOutputStepZ -= STEP_NEXT;
+        }
+        SET_AXIS_Z_FASTLOW;
+        if (gDriverOutputStepZ == STEP_1) { SET_AXIS_Z_STEP1_FASTHIGH; }
+        if (gDriverOutputStepZ == STEP_2) { SET_AXIS_Z_STEP3_FASTHIGH; }
+        if (gDriverOutputStepZ == STEP_3) { SET_AXIS_Z_STEP5_FASTHIGH; }
+        if (gDriverOutputStepZ == STEP_4) { SET_AXIS_Z_STEP7_FASTHIGH; }
+      }
+      // --- timeout ---
+      gDriverOutputTimeout = gUptimeCurrentMillis + TIMEINTERVAL_5MS;
+    }
+  } else {
+    // --- old signal ---
+    if (gUptimeCurrentMillis > gDriverOutputTimeout) {
+      // --- turn off motor ---
+      SET_AXIS_X_FASTLOW;
+      SET_AXIS_Y_FASTLOW;
+      SET_AXIS_Z_FASTLOW;
+      // --- timeout ---
+      gDriverOutputTimeout = gUptimeCurrentMillis + TIMEINTERVAL_1000MS;
+    }
+  }
 }
+
+/*
+
+Grbl 0.9j ['$' for help]
+$0=232 (step pulse, usec)
+$1=3 (step idle delay, msec)
+$2=0 (step port invert mask:00000000)
+$3=0 (dir port invert mask:00000000)
+$4=0 (step enable invert, bool)
+$5=0 (limit pins invert, bool)
+$6=0 (probe pin invert, bool)
+$10=3 (status report mask:00000011)
+$11=0.010 (junction deviation, mm)
+$12=0.002 (arc tolerance, mm)
+$13=0 (report inches, bool)
+$20=0 (soft limits, bool)
+$21=0 (hard limits, bool)
+$22=0 (homing cycle, bool)
+$23=0 (homing dir invert mask:00000000)
+$24=25.000 (homing feed, mm/min)
+$25=500.000 (homing seek, mm/min)
+$26=250 (homing debounce, msec)
+$27=1.000 (homing pull-off, mm)
+$100=18.655 (x, step/mm)
+$101=18.655 (y, step/mm)
+$102=18.655 (z, step/mm)
+$110=1900.000 (x max rate, mm/min)
+$111=1900.000 (y max rate, mm/min)
+$112=1900.000 (z max rate, mm/min)
+$120=10.000 (x accel, mm/sec^2)
+$121=10.000 (y accel, mm/sec^2)
+$122=10.000 (z accel, mm/sec^2)
+$130=200.000 (x max travel, mm)
+$131=200.000 (y max travel, mm)
+$132=200.000 (z max travel, mm)
+ok
+
+*/
