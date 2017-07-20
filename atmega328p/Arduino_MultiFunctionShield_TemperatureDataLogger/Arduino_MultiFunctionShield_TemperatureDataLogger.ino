@@ -8,7 +8,6 @@
 //  https://github.com/rocketscream/Low-Power
 // 
 
-#include "LowPower.h"
 #include "DHT.h"
 #include <TimerOne.h>
 #include <Wire.h>
@@ -125,10 +124,8 @@ unsigned long nextLogTime = LOGINTERVAL;
 
 void loop() {
 
-  // sleep 8 seconds
-  LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
- 
-  // keep powerbank alive
+  // sleep 8 seconds, keep powerbank alive
+  delay(8000);
   MFS.write(" -- "); delay(10); 
 
   // messure temperature
@@ -148,7 +145,7 @@ void loop() {
   t_2 /= 3;
 
   // calibration
-  t_1 += 2.1;
+  t_1 += 0.4;
   t_2 -= 0.9;
 
   // average
@@ -171,9 +168,6 @@ void loop() {
   unsigned long thisTime = millis();
   if (nextLogTime <= thisTime) {
     nextLogTime = thisTime + LOGINTERVAL; // Min
-    Serial.print("LOG adr="); Serial.print(adress);
-    Serial.print(" next ="); Serial.print(nextLogTime);
-    Serial.print(" millis ="); Serial.println(thisTime);
     MFS.write("log ");  delay(500);
     if (adress < EEPROM.length()) {
        EEPROM.write(adress, temp1b);
@@ -183,6 +177,9 @@ void loop() {
        adress += 2;
     }
   }
+  Serial.print("LOG adr="); Serial.print(adress);
+  Serial.print(" next="); Serial.print(nextLogTime);
+  Serial.print(" millis="); Serial.println(thisTime);
 
   // debug
   Serial.print("Sensor 1: hum="); Serial.print(h_1); Serial.print(" %\t"); 
