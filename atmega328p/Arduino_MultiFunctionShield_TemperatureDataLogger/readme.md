@@ -6,6 +6,8 @@
 * Power Bank
 
 This low cost data logger using a Multi-Function Shield to display the temperature of two DHT11 sensors, switch firmware mode at startup by push button and store messures at built-in EEPROM.
+ 
+![DHT11 Data Logger](Arduino-DHT11-Temperature-Data-Logger-Multi-function-shield.jpg "DHT11 Temperature Dat Logger")
 
 ## Data Logger (default mode)
 
