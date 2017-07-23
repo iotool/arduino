@@ -27,4 +27,4 @@ Hold down the right button (A3) and press the reset button. After boot message t
 
 I need this gadget to check the functionality of my camping refrigerator. It messured the temperature inside and outside of the refrigerator or at refrigerator and ice box.
 
-Most power banks will turn off after 10-15 seconds. That's the reason I display the values every 8 seconds to keep-alive the power bank. The display draw 100-200 mA of current. You can run the data logger for 2-3 days by power bank.
+Most power banks will turn off after 10-15 seconds. That's the reason I display the values every 8 seconds to keep-alive the power bank (the display draw 100-200 mA of current). You can run the data logger for 2-3 days by power bank.
