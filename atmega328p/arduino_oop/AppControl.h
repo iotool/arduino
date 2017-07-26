@@ -1,19 +1,22 @@
 // APPCL : AppControl.h (Workflow)
+// 
+// v003: loop
 
 #include "AppInteraction.h"
 
-class AppControl: private AppInteraction {
+class AppControl: public AppInteraction {
   private:
+    /* --- class (internal) --- */
+    void _boot();
     void _init();
-    void _timer();
-    unsigned char _clInit;
-    unsigned int _clTimer;
+    void _loop();
+    unsigned int _clLoop;
   protected:
-    void clInit() { uiInit(); _init(); }
-    void clTimer() { uiTimer(); _timer(); }
+    /* --- package (internal) --- */
   public:
+    /* --- application (external) --- */
     AppControl();
-    void init() { clInit(); }
-    void timer() { clTimer(); }
+    void init() { uiInit(); _init(); }
+    void loop() { uiLoop(); _loop(); }
 };
 

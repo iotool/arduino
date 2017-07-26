@@ -1,13 +1,17 @@
 // APPHW : AppShield.cpp (Driver)
+// 
+// v003: timer
 
 #include "AppShield.h"
 
 AppShield::AppShield() {
-  this->_init();
+  this->_boot();
+}
+
+void AppShield::_boot() {
 }
 
 void AppShield::_init() {
-  this->_hwInit = 1;
   this->_hwTimer = 1;
 }
 

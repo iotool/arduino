@@ -1,17 +1,21 @@
 // APPCL : AppControl.cpp (Workflow)
+// 
+// v003: loop
 
 #include "AppControl.h"
 
 AppControl::AppControl() {
-  this->_init();
+  this->_boot();
+}
+
+void AppControl::_boot() {
 }
 
 void AppControl::_init() {
-  this->_clInit = 1;
-  this->_clTimer = 1;
+  this->_clLoop = 1;
 }
 
-void AppControl::_timer() {
-  this->_clTimer++;
+void AppControl::_loop() {
+  this->_clLoop++;
 }
 
