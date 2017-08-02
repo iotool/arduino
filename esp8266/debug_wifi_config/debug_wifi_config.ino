@@ -76,7 +76,7 @@ void debugWifiConfig() {
   }
   struct softap_config l_wifiSoftapConfig;
   struct station_config l_wifiStationConfig;
-  // saved
+  // current
   wifi_softap_get_config(&l_wifiSoftapConfig); 
   wifi_station_get_config(&l_wifiStationConfig); 
   String l_wifiSoftapConfig_ssid      = (char*)l_wifiSoftapConfig.ssid;
@@ -87,7 +87,7 @@ void debugWifiConfig() {
   Serial.print("wifiSoftapConfig.password[64]  (CURRENT) : "); Serial.println(l_wifiSoftapConfig_password);
   Serial.print("wifiStationConfig.ssid[32]     (CURRENT) : "); Serial.println(l_wifiStationConfig_ssid);
   Serial.print("wifiStationConfig.password[64] (CURRENT) : "); Serial.println(l_wifiStationConfig_password);
-  // current
+  // saved
   wifi_softap_get_config_default(&l_wifiSoftapConfig); 
   wifi_station_get_config_default(&l_wifiStationConfig); 
   l_wifiSoftapConfig_ssid      = (char*)l_wifiSoftapConfig.ssid;
@@ -105,8 +105,8 @@ void setupWifi() {
   char l_softapSsid[32] = {0};
   char l_softapPassword[64] = "12345678";
   uint32_t l_deviceId = system_get_chip_id();
-  sprintf(l_softapSsid,"ESP-%04X",l_deviceId);  
-  WiFi.persistent(false);
+  sprintf(l_softapSsid,"ESP-%04X",l_deviceId); // unique hotspot 
+  WiFi.persistent(false); // don't write to flash
   WiFi.mode(WIFI_AP);  
   boolean l_softap = WiFi.softAP(l_softapSsid,l_softapPassword);
   if(l_softap == true) {
