@@ -17,10 +17,18 @@ void setup() {
   String wifiSoftapConfig_password = (char*)wifiSoftapConfig.password;
   String wifiStationConfig_ssid = (char*)wifiStationConfig.ssid;
   String wifiStationConfig_password = (char*)wifiStationConfig.password;
-  Serial.println("AccessPoint");
+  if (wifiSoftapConfig_ssid.length() > 0) {
+    Serial.println("Wifi AccessPoint = enabled");
+  } else {
+    Serial.println("Wifi AccessPoint = disabled");
+  }
   Serial.print("wifiSoftapConfig.ssid[32]: "); Serial.println(wifiSoftapConfig_ssid);
   Serial.print("wifiSoftapConfig.password[64]: "); Serial.println(wifiSoftapConfig_password);
-  Serial.println("Station");
+  if (wifiStationConfig_ssid.length() > 0) {
+    Serial.println("Wifi Station = enabled");
+  } else {
+    Serial.println("Wifi Station = disabled");
+  }
   Serial.print("wifiStationConfig.ssid[32]: "); Serial.println(wifiStationConfig_ssid);
   Serial.print("wifiStationConfig.password[64]: "); Serial.println(wifiStationConfig_password);
 #endif
