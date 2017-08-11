@@ -32,7 +32,7 @@ void setup() {
   boolean softapStart = WiFi.softAP("ESP-Hotspot");
   wifi_softap_get_config(&softapConfig);
   softapConfig.max_connection = 4;
-  softapConfig.beacon_interval = 100;  
+  softapConfig.beacon_interval = 400;  
   ETS_UART_INTR_DISABLE();
   wifi_softap_set_config_current(&softapConfig);
   ETS_UART_INTR_ENABLE();
@@ -53,7 +53,7 @@ void loop ( void ) {
   delay(1);
   // --- flip/flop softAp
   loops++;
-  if (loops % 1000 == 0) {
+  if (loops % 4500 == 0) {
     // --- softAp[0]: "ESP-Config"
     wifi_softap_get_config(&softapConfig);
     os_memset(softapConfig.ssid, 0, 32);
@@ -68,7 +68,7 @@ void loop ( void ) {
     wifi_softap_set_config_current(&softapConfig);
     ETS_UART_INTR_ENABLE();
   }
-  if (loops % 1000 == 500) {
+  if (loops % 4500 == 2500) {
     // --- softAp[1]: "ESP-Hotspot"
     wifi_softap_get_config(&softapConfig);
     os_memset(softapConfig.ssid, 0, 32);
