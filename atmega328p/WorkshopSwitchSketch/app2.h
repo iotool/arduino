@@ -1,4 +1,4 @@
-// app2.h
+// app2.h- Blink 500 ms
 
 #define APP2_LED_PIN  13
 #define APP2_MILLIS_BLINK_INTERVAL 0
@@ -10,7 +10,7 @@ void setup_APP2() {
 
 void loop_APP2() {
   unsigned long uptime = millis();
-  if (uptime - g_appStaticUint32[APP2_MILLIS_BLINK_INTERVAL] > 1000) {
+  if (uptime - g_appStaticUint32[APP2_MILLIS_BLINK_INTERVAL] > 500) {
     g_appStaticUint32[APP2_MILLIS_BLINK_INTERVAL] = uptime;
     if (digitalRead(APP2_LED_PIN) == HIGH) {
       digitalWrite(APP2_LED_PIN, LOW);

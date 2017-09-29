@@ -1,4 +1,4 @@
-// app1.h - Blink
+// app1.h - Blink 1000 ms
 
 #define APP1_LED_PIN  13
 
