@@ -1,5 +1,8 @@
 # SoftwareSerial ATtiny13A
 
+Aduino IDE alike syntax based on Łukasz Marcin Podkalicki UART example for ATtiny13.
+https://raw.githubusercontent.com/lpodkalicki/blog/master/avr/attiny13/008_software_uart/main.c
+
 ## Config
 
 ### speed
