@@ -1,0 +1,1 @@
+# SoftwareSerial ATtiny13A
