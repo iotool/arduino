@@ -2,4 +2,5 @@
 
 ## ATmega328P
 
-* SoftwareSerialRepeaterLCD: debug serial output to LCD
+* SoftwareSerialRepeaterLCD (Utility): debug serial output to LCD
+* WorkshopSwitchSketch (Template): multiple sketch for workshop 
