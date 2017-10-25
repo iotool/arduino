@@ -5,6 +5,7 @@
  * http://blog.podkalicki.com/attiny13-software-uart-debug-logger/
  * 
  * 2017-10-24  Arduino IDE alike syntax for ATtiny13A
+ * 2017-10-25  uart_puth
  * 
  * #define SERIAL_BEGIN   9600
  * #define SERIAL_TX      PB3
@@ -29,6 +30,7 @@
 
 #define SERIAL_PRINT uart_puts
 #define SERIAL_WRITE uart_putc
+#define SERIAL_WRITE_HEX uart_puth
 #define SERIAL_READ uart_getc
 
 #ifdef SERIAL_BEGIN 
@@ -88,6 +90,7 @@ static char uart_getc();
 static void uart_putc(char c);
 static void uart_puts(const char *s);
 static void uart_puts(const int i);
+static void uart_puth(char n);
 
 char
 uart_getc(void)
@@ -175,12 +178,27 @@ uart_putc(char c)
 void
 uart_puts(const char *s)
 {
-      while (*s) uart_putc(*(s++));
+    while (*s) uart_putc(*(s++));
 }
 
-void uart_puts(const int i)
+void 
+uart_puts(const int i)
+{ 
+  itoa(i,serialBuffer,10);
+  ptrSerialRead = serialBuffer;
+  while (*ptrSerialRead > 0) uart_putc(*(ptrSerialRead++));
+}
+
+void
+uart_puth(char n)
 {
-      itoa(i,serialBuffer,10);
-      ptrSerialRead = serialBuffer;
-      while (*ptrSerialRead > 0) uart_putc(*(ptrSerialRead++));
+  if(((n>>4) & 15) < 10)
+    uart_putc('0' + ((n>>4)&15));
+  else
+    uart_putc('A' + ((n>>4)&15) - 10);
+  n <<= 4;
+  if(((n>>4) & 15) < 10)
+    uart_putc('0' + ((n>>4)&15));
+  else
+    uart_putc('A' + ((n>>4)&15) - 10);
 }
