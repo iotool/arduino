@@ -56,3 +56,20 @@ if (SERIAL_DATA) {
   SERIAL_PRINT(serialBuffer);
 }
 ```
+
+## Issues
+
+PB3=TX required PB2=GND if PB4 has no wire (RX is floating).
+Use PB0 as TX, PB1 as RX and PB2 as GPIO.
+
+Successful variant's
+
+```
+PB0=TX / PB1=floating(RX) / PB2=floating
+PB0=TX / PB1=HIGH(RX) / PB2=floating
+PB0=TX / PB1=floating(RX) / PB2=HIGH
+PB0=TX / PB1=HIGH(RX) / PB2=HIGH
+
+PB4=TX / PB3=HIGH(RX) / PB2=HIGH(GPIO)
+PB4=TX / PB3=HIGH(RX) / PB2=floating
+```
