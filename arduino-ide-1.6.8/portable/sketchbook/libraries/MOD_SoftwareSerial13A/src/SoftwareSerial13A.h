@@ -1,15 +1,16 @@
 /**
- * Copyright (c) 2016, Łukasz Marcin Podkalicki <lpodkalicki@gmail.com>
+ * Copyright (c) 2016, ?ukasz Marcin Podkalicki <lpodkalicki@gmail.com>
  * ATtiny13/008 Example of Software UART.
  * https://raw.githubusercontent.com/lpodkalicki/blog/master/avr/attiny13/008_software_uart/main.c
  * http://blog.podkalicki.com/attiny13-software-uart-debug-logger/
  * 
  * 2017-10-24  Arduino IDE alike syntax for ATtiny13A
  * 2017-10-25  uart_puth
+ * 2017-11-14  enable interrupt for timeout by ovf
  * 
  * #define SERIAL_BEGIN   9600
- * #define SERIAL_TX      PB3
- * #define SERIAL_RX      PB4
+ * #define SERIAL_TX      PB0
+ * #define SERIAL_RX      PB1
  * #define SERIAL_BUFFER  16
  * #include <SoftwareSerial13A.h>
  * 
@@ -28,10 +29,18 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
+// --- timer interrupt diabled ---
 #define SERIAL_PRINT uart_puts
 #define SERIAL_WRITE uart_putc
 #define SERIAL_WRITE_HEX uart_puth
 #define SERIAL_READ uart_getc
+
+// --- timer interrupt enabled ---
+#define SERIAL_PRINTS2 uart_puts2
+#define SERIAL_PRINTN2 uart_putn2
+#define SERIAL_WRITE2 uart_putc2
+#define SERIAL_READ2 uart_getc2
+#define SERIAL_WRITE2_HEX uart_puth2
 
 #ifdef SERIAL_BEGIN 
 # define UART_BAUDRATE ( SERIAL_BEGIN )
@@ -51,6 +60,7 @@
 
 char *ptrSerialRead, serialBuffer[SERIAL_BUFFER];
 #define SERIAL_READLN ptrSerialRead = serialBuffer; while((*(ptrSerialRead++) = SERIAL_READ()) != '\n' && (ptrSerialRead - serialBuffer) < sizeof(serialBuffer)) /*; *ptrSerialRead = 0 */
+#define SERIAL_READLN2 ptrSerialRead = serialBuffer; while((*(ptrSerialRead++) = SERIAL_READ2()) != '\n' && (ptrSerialRead - serialBuffer) < sizeof(serialBuffer)) /*; *ptrSerialRead = 0 */
 #define SERIAL_DATA ((ptrSerialRead - serialBuffer) > 0)
 
 #ifndef UART_RX_ENABLED
@@ -85,6 +95,8 @@ char *ptrSerialRead, serialBuffer[SERIAL_BUFFER];
 #if RXROUNDED > 127
 # error Low baud rates unsupported - use higher UART_BAUDRATE
 #endif
+
+// --- timer interrupt enabled ---
 
 static char uart_getc();
 static void uart_putc(char c);
@@ -183,7 +195,7 @@ uart_puts(const char *s)
 
 void 
 uart_puts(const int i)
-{ 
+{
   itoa(i,serialBuffer,10);
   ptrSerialRead = serialBuffer;
   while (*ptrSerialRead > 0) uart_putc(*(ptrSerialRead++));
@@ -202,3 +214,123 @@ uart_puth(char n)
   else
     uart_putc('A' + ((n>>4)&15) - 10);
 }
+
+// --- timer interrupt enabled ---
+
+static char uart_getc2();
+static void uart_putc2(char c);
+static void uart_puts2(const char *s);
+static void uart_putn2(const int i);
+static void uart_puth2(char n);
+
+char
+uart_getc2(void)
+{
+#ifdef  UART_RX_ENABLED
+  char c;
+  uint8_t sreg;
+
+  sreg = SREG;
+  //# cli();
+  PORTB &= ~(1 << UART_RX); // LOW
+  DDRB &= ~(1 << UART_RX);  // INPUT
+  __asm volatile(
+    " ldi r18, %[rxdelay2] \n\t" // 1.5 bit delay
+    " ldi %0, 0x80 \n\t" // bit shift counter
+    "WaitStart: \n\t"
+    " sbic %[uart_port]-2, %[uart_pin] \n\t" // wait for start edge (Skip if Bit in I/O Register is Cleared)
+    " rjmp WaitStart \n\t"
+    "RxBit: \n\t"
+    // 6 cycle loop + delay - total = 5 + 3*r22
+    // delay (3 cycle * r18) -1 and clear carry with subi
+    " subi r18, 1 \n\t"
+    " brne RxBit \n\t"
+    " ldi r18, %[rxdelay] \n\t"
+    " sbic %[uart_port]-2, %[uart_pin] \n\t" // check UART PIN
+    " sec \n\t"
+    " ror %0 \n\t"
+    " brcc RxBit \n\t"
+    "StopBit: \n\t"
+    " dec r18 \n\t"
+    " brne StopBit \n\t"
+    : "=r" (c)
+    : [uart_port] "I" (_SFR_IO_ADDR(PORTB)),
+    [uart_pin] "I" (UART_RX),
+    [rxdelay] "I" (RXDELAY),
+    [rxdelay2] "I" (RXDELAY2)
+    : "r0","r18","r19"
+  );
+  SREG = sreg;
+  return c;
+#else
+  return (-1);
+#endif /* !UART_RX_ENABLED */
+}
+
+void
+uart_putc2(char c)
+{
+#ifdef  UART_TX_ENABLED
+  uint8_t sreg;
+
+  sreg = SREG;
+  //# cli();
+  PORTB |= 1 << UART_TX;
+  DDRB |= 1 << UART_TX;
+  __asm volatile(
+    " cbi %[uart_port], %[uart_pin] \n\t" // start bit (Clear Bit in I/O Register)
+    " in r0, %[uart_port] \n\t"
+    " ldi r30, 3 \n\t" // stop bit + idle state
+    " ldi r28, %[txdelay] \n\t"
+    "TxLoop: \n\t"
+    // 8 cycle loop + delay - total = 7 + 3*r22
+    " mov r29, r28 \n\t"
+    "TxDelay: \n\t"
+    // delay (3 cycle * delayCount) - 1
+    " dec r29 \n\t"
+    " brne TxDelay \n\t"
+    " bst %[ch], 0 \n\t"
+    " bld r0, %[uart_pin] \n\t"
+    " lsr r30 \n\t"
+    " ror %[ch] \n\t"
+    " out %[uart_port], r0 \n\t"
+    " brne TxLoop \n\t"
+    :
+    : [uart_port] "I" (_SFR_IO_ADDR(PORTB)),
+    [uart_pin] "I" (UART_TX),
+    [txdelay] "I" (TXDELAY),
+    [ch] "r" (c)
+    : "r0","r28","r29","r30"
+  );
+  SREG = sreg;
+#endif /* !UART_TX_ENABLED */
+}
+
+void
+uart_puts2(const char *s)
+{
+  while (*s) uart_putc2(*(s++));
+}
+
+void 
+uart_putn2(const int i)
+{
+  itoa(i,serialBuffer,10);
+  ptrSerialRead = serialBuffer;
+  while (*ptrSerialRead > 0) uart_putc2(*(ptrSerialRead++));
+}
+
+void
+uart_puth2(char n)
+{
+  if(((n>>4) & 15) < 10)
+    uart_putc2('0' + ((n>>4)&15));
+  else
+    uart_putc2('A' + ((n>>4)&15) - 10);
+  n <<= 4;
+  if(((n>>4) & 15) < 10)
+    uart_putc2('0' + ((n>>4)&15));
+  else
+    uart_putc2('A' + ((n>>4)&15) - 10);
+}
+
