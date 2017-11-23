@@ -21,7 +21,7 @@
 // The data on the ATtiny are reset save to use the reset pin as push button without fuse bits.
 // Tree pins are left for sensor or actor usage.
 // 
-// 2017-11-22  init 0x00, comments [678 byte program / 29 byte sram]
+// 2017-11-22  init 0x00, comments, bugfix parity/timeout [688 byte program / 29 byte sram]
 
 // --- arduino ide libraries ---
 
@@ -105,9 +105,7 @@ int main(void)
     serialPrintVersion();          // send api version identify to client
     serialPrintLf();               // split serial output by new line
 
-    g_timerFlags |= 0b00000001;    // enable timeout for readln by interrupt
     serialReadln();                // read serial command line
-    g_timerFlags = 0;              // disable timeout by interrupt
     
     serialPrintDataBuffer();       // send serial output buffer
     DDRB &= ~(1 << UART_TX);       // tx output pin as input to turn led off
@@ -133,10 +131,16 @@ ISR(TIM0_OVF_vect)
     // So the ATtiny could not goto power save mode, if the master don't send any request.
     // To ensure power safe mode the endless loop stopped by this fake impulse.
     __asm volatile(
-      " cbi %[uart_port], %[uart_pin] \n\t"    // interrupt rx pin endless start loop
+      " cbi %[uart_port], %[uart_pin] \n\t"    // start bit (Clear Bit in I/O Register)
+      :
+      : [uart_port] "I" (_SFR_IO_ADDR(PORTB)),
+        [uart_pin] "I" (UART_TX)
+      /*--- TODO: RXD based code
+      " cbi %[uart_port]-2, %[uart_pin] \n\t"
       :
       : [uart_port] "I" (_SFR_IO_ADDR(PORTB)),
         [uart_pin] "I" (UART_RX)
+      ---*/
     );  
   }
 }
@@ -310,16 +314,18 @@ void serialReadln()                                     // read line
   // --- read serial input into buffer or interrupt by timeout
   char *ptrSerialRead, serialBuffer[UART_BUFFER];
   ptrSerialRead = serialBuffer; 
+  g_timerFlags |= 0b00000001;    // enable timeout for readln by interrupt
   while((*(ptrSerialRead++)=uart_getchar())!='\n' && (ptrSerialRead-serialBuffer)<UART_BUFFER);
+  g_timerFlags = 0;              // disable timeout by interrupt
 
   // --- parse, validate input and set data
   // The request codes optimized for minimal programm memory and simple bitwise operations.
   // Char 64 represents the begin of the range and is equivalent to 0.
   // The parity byte and hex code should prevent most communication issues (Addresse=HighLowParity).
   // [@..Y] = [@..O][@..O][@.._] \n
-  uint8_t pos = serialBuffer[0]^0x01000000; // 0..25
-  uint8_t val = ((serialBuffer[2]^0x01000000)<<4)+(serialBuffer[3]^0x01000000); // 0..255
-  uint8_t crc = (serialBuffer[0]^serialBuffer[1]^serialBuffer[2]^serialBuffer[3]^serialBuffer[5]^0x00100000); // 64..95
+  uint8_t pos = serialBuffer[0]^0b01000000; // 0..25
+  uint8_t val = ((serialBuffer[2]^0b01000000)<<4)+(serialBuffer[3]^0b01000000); // 0..255
+  uint8_t crc = (serialBuffer[0]^serialBuffer[1]^serialBuffer[2]^serialBuffer[3]^serialBuffer[5]^0b00100000); // 64..95
 
   if ((pos < DATA_BUFFER) && (crc == serialBuffer[4])) {
     dataBufferSet(pos,val);
