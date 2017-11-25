@@ -3,80 +3,59 @@
 ## Serial Protocol
 
 ```
+> "4:0101010100AAAA\n
+> "3:01010101010101\n"
+> "2:00000001010101\n"
+> "1:01000000000000\n"
+
+buffer[11] = 0
+
 > "C:1\n"
-< "@=@@W\n"
-> "4:1122334455cscs\n"
-> "3:1122334455cscs\n"
-> "2:1122334455cscs\n"
-> "1:1122334455cscs\n"
+< "J=@@]\n"
+> "4:0101010100A8A8\n"
+> "3:01010101010101\n"
+> "2:00000000010101\n"
+> "1:01000000000000\n"
 ```
 
 ### Encode Request
 
 ```
 String serialCommand(uint8_t pos, uint8_t val) {
-  char adr = pos+64;
-  char vhi = ((val & 0b11110000) >> 4) + 64;
-  char vlo = val & 0b00001111 + 64;
-  char par = adr ^ 61 ^ vhi ^ vlo ^ 10 ^ 32;
-  String cmd = "";
-         cmd += adr;
-         cmd += "=";
-         cmd += vhi;
-         cmd += vlo;
-         cmd += par;
-         cmd += "\n";
+  // command to set a value at address with parity
+  // encode as ascii code between 64..94
+  // because of simple validation algorithm
+  // debugging and control charactures ":", "=", "\n"
+
+  char adr = pos;           // address 0..26
+       adr += 64;           // move to ascii @..Y
+  char vhi = val;
+       vhi &= 0b11110000;   // value hex high 16..240
+       vhi = vhi >> 4;      // shift to 0..15
+       vhi += 64;           // move to ascii @..P
+  char vlo = val;
+       vlo &= 0b00001111;   // value hex low 0..15
+       vlo += 64;           // move to ascii @..P
+
+  char par = adr            // address 
+           ^ 61             // "="
+           ^ vhi            // value_high
+           ^ vlo            // value_low
+           ^ 10             // line feed       
+           ^ 32;            // move to ascii @..^
+
+  String cmd = "";          // "A=HLP\n"
+         cmd += adr;        // @..Y  address
+         cmd += "=";        // =     set command
+         cmd += vhi;        // @..P  value high
+         cmd += vlo;        // @..P  value low
+         cmd += par;        // @..^  parity
+         cmd += "\n";       // \n    line feed
   return cmd;
 }
 ```
 
 ## Serial Input
-
-<script>
-function enc(i) {
-  return i+64;
-}
-function xor(N,H,L) {
-  var P = N ^ 61 ^ H ^ L ^ 10 ^ 32; //  61 ^ 32
-  return P;
-}
-document.writeln('<pre>');
-var nx,hx,ix,ixmin=255,ixmax=0;
-for (n=0; n<26; n++) 
-for (h=0; h<16; h++) 
-for (l=0; l<16; l++) 
-{
-  nx = enc(n);
-  hx = enc(h);
-  lx = enc(l);
-  px = xor(nx,hx,lx);
-  if (px<ixmin) ixmin=px;
-  if (px>ixmax) ixmax=px;
-}
-document.writeln('min(p) = '+ixmin);
-document.writeln('max(p) = '+ixmax);
-document.writeln();
-for (n=0; n<26; n++) 
-for (h=0; h<16; h++) 
-for (l=0; l<16; l++) 
-{
-  nx = enc(n);
-  hx = enc(h);
-  lx = enc(l);
-  px = xor(nx,hx,lx);
-  document.write(String.fromCharCode(nx)+'=');
-  document.write(String.fromCharCode(hx));
-  document.write(String.fromCharCode(lx));
-  document.write(String.fromCharCode(px)+' ');
-  if (n<10) document.write(' '); document.write(n+'=');
-  if (h<10) document.write(' '); document.write(h+',');
-  if (l<10) document.write(' '); document.write(l+':');
-  if (px<10) document.write(' '); document.write(px+'  ');
-  document.write(h*16+l);
-    document.writeln();
-}
-document.writeln('</pre>');
-</script>
 
 ```
 min(parity) = 64
@@ -91,10 +70,6 @@ max(parity) = 95
 @=@FQ  0= 0, 6:81  6
 @=@GP  0= 0, 7:80  7
 ...
-...
-Y=OBC 25=15, 2:67  242
-Y=OCB 25=15, 3:66  243
-Y=ODE 25=15, 4:69  244
 Y=OED 25=15, 5:68  245
 Y=OFG 25=15, 6:71  246
 Y=OGF 25=15, 7:70  247
@@ -106,4 +81,60 @@ Y=OLM 25=15,12:77  252
 Y=OML 25=15,13:76  253
 Y=ONO 25=15,14:79  254
 Y=OON 25=15,15:78  255
+```
+
+
+All combinations of partity, address, high and low values
+
+```
+<script>
+function enc(i) 
+{
+  return i+64;
+}
+function xor(N,H,L) 
+{
+  var P = N ^ 61 ^ H ^ L ^ 10 ^ 32; //  61 ^ 32
+  return P;
+}
+document.writeln('<pre>');
+var nx,hx,ix,ixmin=255,ixmax=0;
+
+for (n=0; n<26; n++) 
+  for (h=0; h<16; h++) 
+    for (l=0; l<16; l++) 
+    {
+      nx = enc(n);
+      hx = enc(h);
+      lx = enc(l);
+      px = xor(nx,hx,lx);
+      if (px<ixmin) ixmin=px;
+      if (px>ixmax) ixmax=px;
+    }
+document.writeln('min(p) = '+ixmin);
+document.writeln('max(p) = '+ixmax);
+document.writeln();
+
+for (n=0; n<26; n++) 
+  for (h=0; h<16; h++) 
+    for (l=0; l<16; l++) 
+    {
+      nx = enc(n);
+      hx = enc(h);
+      lx = enc(l);
+      px = xor(nx,hx,lx);
+      document.write(String.fromCharCode(nx)+'=');
+      document.write(String.fromCharCode(hx));
+      document.write(String.fromCharCode(lx));
+      document.write(String.fromCharCode(px)+' ');
+      if (n<10) document.write(' '); document.write(n+'=');
+      if (h<10) document.write(' '); document.write(h+',');
+      if (l<10) document.write(' '); document.write(l+':');
+      if (px<10) document.write(' '); document.write(px+'  ');
+      document.write(h*16+l);
+        document.writeln();
+    }
+
+document.writeln('</pre>');
+</script>
 ```
