@@ -23,12 +23,13 @@ void setup() {
   } else {
     gResetSafeMemory.resetCount++;
   }
-  gResetSafeMemory.uptimePrev = 0;
 
   Serial.begin(9600);
   delay(10);
   Serial.print("ResetCounter = "); Serial.println(gResetSafeMemory.resetCount);  
   Serial.print("UptimePrev = "); Serial.println(gResetSafeMemory.uptimePrev);  
+
+  gResetSafeMemory.uptimePrev = 0;
 }
 
 void loop() {
