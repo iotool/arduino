@@ -1,4 +1,4 @@
-# Reset-Button-Counter
+# Reset-Button as Input
 
 Use Arduino builtin reset button like a push button without EEPROM. The counter value stored at SRAM.
 
