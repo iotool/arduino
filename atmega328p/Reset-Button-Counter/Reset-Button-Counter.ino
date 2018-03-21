@@ -23,6 +23,7 @@ typedef struct {
   uint32_t uptimePrev;
   uint8_t  sketchMode;
   uint8_t  pushButton;
+  uint16_t resetCount;
 } tResetSafeMemory;
 
 tResetSafeMemory gResetSafeMemory \
@@ -44,6 +45,7 @@ void setup()
   Serial.print("UptimePrev = "); Serial.println(gResetSafeMemory.uptimePrev);  
   Serial.print("sketchMode = "); Serial.println(gResetSafeMemory.sketchMode);  
   Serial.print("pushButton = "); Serial.println(gResetSafeMemory.pushButton);
+  Serial.print("resetCount = "); Serial.println(gResetSafeMemory.resetCount);  
   StartResetSafeMemory();
 
   // toggle mode
@@ -61,7 +63,6 @@ void setup()
   }
   digitalWrite(13,HIGH); delay(RESET_BUTTON_READY);
   digitalWrite(13,LOW);
-  
   // start sketch
   Serial.println("Ready");
   delay(10);
@@ -70,8 +71,13 @@ void setup()
   // ... your code here ...
   if (gResetSafeMemory.pushButton == 1) 
   {
-    // interpreted as push button
     Serial.println("Button");
+    // display blink code
+    for (byte i=0; i<=5; i++) 
+    {
+      digitalWrite(13,HIGH); delay(150);
+      digitalWrite(13,LOW); delay(50);
+    }
   }
 }
 
@@ -92,15 +98,18 @@ void InitResetSafeMemory()
     gResetSafeMemory.uptimePrev = 0;
     gResetSafeMemory.sketchMode = 0;
     gResetSafeMemory.pushButton = 0;
+    gResetSafeMemory.resetCount = 0;
   } 
   else 
   {
     // reset
     gResetSafeMemory.pushButton = 0;
+    gResetSafeMemory.resetCount++;
     if (gResetSafeMemory.uptimePrev < (RESET_BUTTON_DISPLAY+RESET_BUTTON_READY)) 
     {
       // during start
       gResetSafeMemory.sketchMode++;
+      gResetSafeMemory.pushButton = 0;
       if (gResetSafeMemory.sketchMode >= RESET_BUTTON_MODES) 
       {
         gResetSafeMemory.sketchMode = 0;
