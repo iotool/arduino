@@ -2,6 +2,8 @@
 
 Use Arduino builtin reset button like a push button without EEPROM. The counter value stored at SRAM.
 
+[![Arduino Uno reset button as input like a push button](http://img.youtube.com/vi/5k2Rmplv25g/0.jpg)](http://www.youtube.com/watch?v=5k2Rmplv25g "Arduino Uno reset button as input like a push button")
+
 ## hardware
 
 * Arduino Uno R3
