@@ -10,20 +10,26 @@
 //  The selected mode is indicated by a blink code (default 0).
 //  After start, the click can be interpreted as a push or reset.
 // 
+//  RESET_BUTTON_TOGGLE  0          enable toggle all the time
+//  RESET_BUTTON_TOGGLE  5000       disable toggle after 5 seconds       
+//
 
-#define RESET_BUTTON_MAGIC   0xFACE800C
-#define RESET_BUTTON_LIMIT   60000
-#define RESET_BUTTON_REFRESH 1000
-#define RESET_BUTTON_DISPLAY 3000
-#define RESET_BUTTON_READY   2000
-#define RESET_BUTTON_MODES   3
+#define RESET_BUTTON_MAGIC   0xFACE800C /* detect poweron */
+#define RESET_BUTTON_LIMIT   10000      /* ms end of refresh */
+#define RESET_BUTTON_REFRESH 1000       /* ms refresh interval */
+#define RESET_BUTTON_DISPLAY 3000       /* ms show current mode */
+#define RESET_BUTTON_READY   2000       /* ms led on at start */
+#define RESET_BUTTON_TOGGLE  0          /* ms toggle timeout */
+#define RESET_BUTTON_MODES   3          /* number of modes */
 
 typedef struct {
-  uint32_t initMemory;
-  uint32_t uptimePrev;
-  uint8_t  sketchMode;
-  uint8_t  pushButton;
-  uint16_t resetCount;
+  uint32_t initMemory;                  // initial checksum
+  uint32_t uptimePrev;                  // previouse uptime
+  uint8_t  resetCount;                  // reset counter
+  uint8_t  sketchMode;                  // current sketch mode
+  unsigned pushButton:1;                // flag push button
+  unsigned toggleMode:1;                // flag toggle enabled
+  unsigned :6;                          // reserved (8 bit aligned)
 } tResetSafeMemory;
 
 tResetSafeMemory gResetSafeMemory \
@@ -42,26 +48,32 @@ void setup()
   InitResetSafeMemory();
   Serial.begin(9600);
   delay(10);
+  Serial.println();  
+  Serial.print("resetCount = "); Serial.println(gResetSafeMemory.resetCount);  
   Serial.print("UptimePrev = "); Serial.println(gResetSafeMemory.uptimePrev);  
   Serial.print("sketchMode = "); Serial.println(gResetSafeMemory.sketchMode);  
   Serial.print("pushButton = "); Serial.println(gResetSafeMemory.pushButton);
-  Serial.print("resetCount = "); Serial.println(gResetSafeMemory.resetCount);  
+  Serial.print("toggleMode = "); Serial.println(gResetSafeMemory.toggleMode);
   StartResetSafeMemory();
 
   // toggle mode
   pinMode(13,OUTPUT);
-  while (millis()<RESET_BUTTON_DISPLAY) 
+  if (gResetSafeMemory.toggleMode == 1)
   {
-    // display blink code
-    for (byte i=0; i<=gResetSafeMemory.sketchMode; i++) 
+    // toggle mode
+    while (millis()<RESET_BUTTON_DISPLAY) 
     {
-      digitalWrite(13,HIGH); delay(150);
-      digitalWrite(13,LOW); delay(250);
+      // display blink code
+      for (byte i=0; i<=gResetSafeMemory.sketchMode; i++) 
+      {
+        digitalWrite(13,HIGH); delay(150);
+        digitalWrite(13,LOW); delay(250);
+      }
+      delay(500);
+      RefreshResetSafeMemory();
     }
-    delay(500);
-    RefreshResetSafeMemory();
+    digitalWrite(13,HIGH); delay(RESET_BUTTON_READY);
   }
-  digitalWrite(13,HIGH); delay(RESET_BUTTON_READY);
   digitalWrite(13,LOW);
   // start sketch
   Serial.println("Ready");
@@ -97,28 +109,39 @@ void InitResetSafeMemory()
     gResetSafeMemory.initMemory = RESET_BUTTON_MAGIC;
     gResetSafeMemory.uptimePrev = 0;
     gResetSafeMemory.sketchMode = 0;
-    gResetSafeMemory.pushButton = 0;
     gResetSafeMemory.resetCount = 0;
+    gResetSafeMemory.pushButton = 0;
+    gResetSafeMemory.toggleMode = 1;
   } 
   else 
   {
     // reset
-    gResetSafeMemory.pushButton = 0;
     gResetSafeMemory.resetCount++;
-    if (gResetSafeMemory.uptimePrev < (RESET_BUTTON_DISPLAY+RESET_BUTTON_READY)) 
+    if (gResetSafeMemory.toggleMode == 0) 
     {
-      // during start
-      gResetSafeMemory.sketchMode++;
-      gResetSafeMemory.pushButton = 0;
-      if (gResetSafeMemory.sketchMode >= RESET_BUTTON_MODES) 
-      {
-        gResetSafeMemory.sketchMode = 0;
-      }
+      // toggle disabled after timeout
+      gResetSafeMemory.pushButton = 1;
+    }
+    else if ((RESET_BUTTON_TOGGLE > 0) && (gResetSafeMemory.uptimePrev > RESET_BUTTON_TOGGLE)) 
+    {
+      // disable toggle by timeout
+      gResetSafeMemory.toggleMode = 0;
+      gResetSafeMemory.pushButton = 1;
+    }
+    else if (gResetSafeMemory.uptimePrev > (RESET_BUTTON_DISPLAY+RESET_BUTTON_READY)) 
+    {
+      // after select-mode timeout
+      gResetSafeMemory.pushButton = 1;
     }
     else 
     {
-      // after start
-      gResetSafeMemory.pushButton = 1;
+      // during start
+      gResetSafeMemory.pushButton = 0;
+      gResetSafeMemory.sketchMode++;
+      if (gResetSafeMemory.sketchMode >= RESET_BUTTON_MODES) 
+      {
+        gResetSafeMemory.sketchMode = 0;
+      }      
     }
   }
 }
