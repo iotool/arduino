@@ -61,6 +61,7 @@ void setup()
   }
   digitalWrite(13,HIGH); delay(RESET_BUTTON_READY);
   digitalWrite(13,LOW);
+  
   // start sketch
   Serial.println("Ready");
   delay(10);
@@ -69,6 +70,7 @@ void setup()
   // ... your code here ...
   if (gResetSafeMemory.pushButton == 1) 
   {
+    // interpreted as push button
     Serial.println("Button");
   }
 }
