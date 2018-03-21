@@ -39,7 +39,7 @@ Use Arduino builtin reset button like a push button without EEPROM. The counter 
 
 ## push button by reset
 
-### mode 1
+### button
 
 * poweron
 * led blinks / toogle mode
