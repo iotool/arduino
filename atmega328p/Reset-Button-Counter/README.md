@@ -41,7 +41,17 @@ Use Arduino builtin reset button like a push button without EEPROM. The counter 
 
 ## push button by reset
 
-### button
+### RESET_BUTTON_TOGGLE 5000
+
+disable toggle after 5 seconds
+
+* restart mode with push mode
+* led blinks fast for 1 second
+
+
+### RESET_BUTTON_TOGGLE 0
+
+enable toggle all the time
 
 * poweron
 * led blinks / toogle mode
@@ -49,5 +59,5 @@ Use Arduino builtin reset button like a push button without EEPROM. The counter 
 * start mode
 * click reset button
 * led blinks for mode
-* restart mode with push button
+* restart mode with push mode
 * led blinks fast for 1 second
