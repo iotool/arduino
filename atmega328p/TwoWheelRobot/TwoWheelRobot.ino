@@ -143,12 +143,13 @@ void loop()
     turnMotorOn();
     MOTOR_TOOGLE;
     MOTOR_FORWARD;
-    while (runMotionByTime(2000,1))
+    uint32_t lTimout = 2000;
+    while (runMotionByTime(lTimout,1))
     {
       distance = getDistance(); 
-      if (distance < 100) 
+      if (distance < 150) 
       {
-        gTaskData.speedMotionBlocked = 1;
+        lTimout = 0;
       }
       Serial.print("distance "); Serial.print(distance); Serial.print(" mm ; speed "); 
       Serial.print(gTaskData.speedMotionMmPerSec); Serial.println(" mm/s");
