@@ -91,14 +91,14 @@ void setup()
 
 void loop() 
 {
-  delay(1000);
+  delay(100);
 
   // 
   // search largest distance
   // 
   byte max_i = 0;
   long max_distance = 0, distance = 0; 
-  for (byte i=(255-64); i>=63; i-=8) {
+  for (byte i=(255-64); i>=63; i-=16) {
     analogWrite(PIN_SONAR_SERVO, i+CFG_SONAR_CALI);
     distance = getDistance(); 
     if (distance > max_distance) {
@@ -143,7 +143,7 @@ void loop()
     turnMotorOn();
     MOTOR_TOOGLE;
     MOTOR_FORWARD;
-    uint32_t lTimout = 2000;
+    uint32_t lTimout = 10000;
     while (runMotionByTime(lTimout,1))
     {
       distance = getDistance(); 
@@ -153,20 +153,54 @@ void loop()
       }
       Serial.print("distance "); Serial.print(distance); Serial.print(" mm ; speed "); 
       Serial.print(gTaskData.speedMotionMmPerSec); Serial.println(" mm/s");
-      delay(20);
+      delay(distance/8);
+      delay(10);
     }
     turnMotorOff();
-    // backward (blocked)
+    // backward / u-turn (blocked)
     if (gTaskData.speedMotionBlocked == 1) 
     {
       Serial.println("FAIL: MOTION BLOCKED!");
       delay(1000);
       turnMotorOn();
       MOTOR_BACKWARD;
-      while (runMotionByCount(40,0)) {delay(1);}
+      while (runMotionByCount(30,0)) {delay(1);}
       turnMotorOff();
     }
+    else if (distance < 5) {
+      turnMotorOn();
+      MOTOR_BACKWARD;
+      while (runMotionByCount(10,0)) {delay(1);}
+      turnMotorOff();
+      delay(100);
+      turnMotorOn();
+      MOTOR_RIGHT;
+      while (runMotionByCount(10,0)) {delay(1);}
+      turnMotorOff();      
+    }
   }
+
+  // 
+  // move direction if too close
+  // 
+  else {
+    turnMotorOn();
+    MOTOR_RIGHT;
+    while (runMotionByCount(5,0)) {delay(1);}
+    turnMotorOff();
+  }
+
+  // backward / u-turn (blocked)
+  if (gTaskData.speedMotionBlocked == 1) 
+  {
+    Serial.println("FAIL: MOTION BLOCKED!");
+    delay(1000);
+    turnMotorOn();
+    MOTOR_BACKWARD;
+    while (runMotionByCount(30,0)) {delay(1);}
+    turnMotorOff();
+  }
+
 }
 
 uint32_t getDistance() 
