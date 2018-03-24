@@ -53,12 +53,9 @@
 #define PIN_MOTOR_L_SPEED       9  /* L298N DC-Motor (left) */ 
 #define PIN_MOTOR_R_BACK        8  /* L298N DC-Motor (right) */ 
 #define PIN_MOTOR_R_DRIVE       7  /* L298N DC-Motor (right) */ 
-#define PIN_MOTOR_R_SPEED      10  /* L298N DC-Motor (left) */ 
-
-// --- unbenutzt
+#define PIN_MOTOR_R_SPEED      10  /* L298N DC-Motor (right) */ 
 #define PIN_SONAR_ECHO          2  /* HCSRC04-Echo */
 #define PIN_SONAR_TRIG          4  /* HCSRC04-Trigger */
-
 #define CFG_SONAR_TIMEOUT   65000  /* HCSRC04-Timeout 65 millis */
 #define CFG_SONAR_DISTANCE     25  /* HCSRC04-Distance 25 cm */
 #define USE_SONAR_SERVO         1  /* flag use servo */
@@ -69,30 +66,24 @@
 #define PIN_SPEED_ECHO         A1  /* LM393 Speed-Sensor-Echo */
 
 // interface
-#define LED_ON             digitalWrite(PIN_LED_BUILTIN, HIGH)
-#define LED_OFF            digitalWrite(PIN_LED_BUILTIN, LOW)
-#define MOTOR_L_STOP       digitalWrite(PIN_MOTOR_L_DRIVE,LOW); digitalWrite(PIN_MOTOR_L_BACK,LOW)
-#define MOTOR_R_STOP       digitalWrite(PIN_MOTOR_R_DRIVE,LOW); digitalWrite(PIN_MOTOR_R_BACK,LOW)
-#define MOTOR_L_FORWARD    digitalWrite(PIN_MOTOR_L_DRIVE,HIGH); digitalWrite(PIN_MOTOR_L_BACK,LOW)
-#define MOTOR_R_FORWARD    digitalWrite(PIN_MOTOR_R_DRIVE,HIGH); digitalWrite(PIN_MOTOR_R_BACK,LOW)
-#define MOTOR_L_BACKWARD   digitalWrite(PIN_MOTOR_L_DRIVE,LOW); digitalWrite(PIN_MOTOR_L_BACK,HIGH)
-#define MOTOR_R_BACKWARD   digitalWrite(PIN_MOTOR_R_DRIVE,LOW); digitalWrite(PIN_MOTOR_R_BACK,HIGH)
 uint8_t gMotorToogleSide = 0;
-#define MOTOR_TOOGLE    gMotorToogleSide++
-#define MOTOR_STOP      if((gMotorToogleSide%2)==0) {MOTOR_L_STOP;MOTOR_R_STOP;} else {MOTOR_R_STOP;MOTOR_L_STOP;}
-#define MOTOR_FORWARD   if((gMotorToogleSide%2)==0) {MOTOR_L_FORWARD;MOTOR_R_FORWARD;} else {MOTOR_R_FORWARD;MOTOR_L_FORWARD;}
-#define MOTOR_BACKWARD  if((gMotorToogleSide%2)==0) {MOTOR_L_BACKWARD;MOTOR_R_BACKWARD;} else {MOTOR_R_BACKWARD;MOTOR_L_BACKWARD;}
-#define MOTOR_LEFT      if((gMotorToogleSide%2)==0) {MOTOR_L_FORWARD;MOTOR_R_BACKWARD;} else {MOTOR_R_BACKWARD;MOTOR_L_FORWARD;}
-#define MOTOR_RIGHT     if((gMotorToogleSide%2)==0) {MOTOR_L_BACKWARD;MOTOR_R_FORWARD;} else {MOTOR_R_FORWARD;MOTOR_L_BACKWARD;}
-
-// 127,95,159
-#define SERVO_CENTER    analogWrite(PIN_SONAR_SERVO, 127+CFG_SONAR_CALI)
-#define SERVO_RIGHT_1   analogWrite(PIN_SONAR_SERVO, 103+CFG_SONAR_CALI)
-#define SERVO_RIGHT_2   analogWrite(PIN_SONAR_SERVO,  79+CFG_SONAR_CALI)
-#define SERVO_RIGHT_3   analogWrite(PIN_SONAR_SERVO,  55+CFG_SONAR_CALI)
-#define SERVO_LEFT_1    analogWrite(PIN_SONAR_SERVO, 151+CFG_SONAR_CALI)
-#define SERVO_LEFT_2    analogWrite(PIN_SONAR_SERVO, 175+CFG_SONAR_CALI)
-#define SERVO_LEFT_3    analogWrite(PIN_SONAR_SERVO, 199+CFG_SONAR_CALI)
+#define LED_ON            digitalWrite(PIN_LED_BUILTIN, HIGH)
+#define LED_OFF           digitalWrite(PIN_LED_BUILTIN, LOW)
+#define MOTOR_L_STOP      digitalWrite(PIN_MOTOR_L_DRIVE,LOW); digitalWrite(PIN_MOTOR_L_BACK,LOW)
+#define MOTOR_R_STOP      digitalWrite(PIN_MOTOR_R_DRIVE,LOW); digitalWrite(PIN_MOTOR_R_BACK,LOW)
+#define MOTOR_L_FORWARD   digitalWrite(PIN_MOTOR_L_DRIVE,HIGH); digitalWrite(PIN_MOTOR_L_BACK,LOW)
+#define MOTOR_R_FORWARD   digitalWrite(PIN_MOTOR_R_DRIVE,HIGH); digitalWrite(PIN_MOTOR_R_BACK,LOW)
+#define MOTOR_L_BACKWARD  digitalWrite(PIN_MOTOR_L_DRIVE,LOW); digitalWrite(PIN_MOTOR_L_BACK,HIGH)
+#define MOTOR_R_BACKWARD  digitalWrite(PIN_MOTOR_R_DRIVE,LOW); digitalWrite(PIN_MOTOR_R_BACK,HIGH)
+#define MOTOR_TOOGLE      gMotorToogleSide++
+#define MOTOR_STOP        if((gMotorToogleSide%2)==0) {MOTOR_L_STOP;MOTOR_R_STOP;} else {MOTOR_R_STOP;MOTOR_L_STOP;}
+#define MOTOR_FORWARD     if((gMotorToogleSide%2)==0) {MOTOR_L_FORWARD;MOTOR_R_FORWARD;} else {MOTOR_R_FORWARD;MOTOR_L_FORWARD;}
+#define MOTOR_BACKWARD    if((gMotorToogleSide%2)==0) {MOTOR_L_BACKWARD;MOTOR_R_BACKWARD;} else {MOTOR_R_BACKWARD;MOTOR_L_BACKWARD;}
+#define MOTOR_LEFT        if((gMotorToogleSide%2)==0) {MOTOR_L_FORWARD;MOTOR_R_BACKWARD;} else {MOTOR_R_BACKWARD;MOTOR_L_FORWARD;}
+#define MOTOR_RIGHT       if((gMotorToogleSide%2)==0) {MOTOR_L_BACKWARD;MOTOR_R_FORWARD;} else {MOTOR_R_FORWARD;MOTOR_L_BACKWARD;}
+#define SERVO_CENTER      analogWrite(PIN_SONAR_SERVO, 127+CFG_SONAR_CALI)
+#define SERVO_RIGHT       analogWrite(PIN_SONAR_SERVO,  79+CFG_SONAR_CALI)
+#define SERVO_LEFT        analogWrite(PIN_SONAR_SERVO, 175+CFG_SONAR_CALI)
 
 void setupHardware() 
 {
