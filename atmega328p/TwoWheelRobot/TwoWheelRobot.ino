@@ -48,15 +48,17 @@ void setup()
 
 void loop() 
 {
+
+  uint16_t minDistance = 250;
   delay(100);
   
   // 
   // search for largest distance
   // 
+  byte max_i = 0, i = 0;
+  long max_distance = 0, min_distance = 0, distance = 0; 
   scanSonarDouble();
-  byte max_i = 0;
-  long max_distance = 0, distance = 0; 
-  for (byte i=0; i<=4; i++) 
+  for (i=0; i<=4; i++) 
   {
     distance = gSonarAreaAvg[i]; 
     if (distance > max_distance) {
@@ -69,7 +71,7 @@ void loop()
   // 
   // move direction to largest distance
   // 
-  if (distance <= 200) {
+  if (distance <= minDistance) {
     if ((max_i < 2) || (max_i > 2)) {
       if (max_i < 2) {
         Serial.print("move right "); Serial.println(10*(2-max_i)); delay(100); 
@@ -94,7 +96,7 @@ void loop()
   // 
   // drive forward
   // 
-  if (distance > 200) 
+  if (distance > minDistance) 
   {
     // forward
     turnMotorOn();
@@ -108,9 +110,23 @@ void loop()
         // detect deadlock
         lCount++;
       }
-      scanSonarCenter();
-      distance = gSonarAreaRaw[CFG_ROBOT_SONAR_AREA_C90]; 
-      if (distance < 150) 
+      if (lCount < 100) {
+        scanSonarCenter();
+        distance = gSonarAreaRaw[CFG_ROBOT_SONAR_AREA_C90]; 
+      } else {
+        scanSonarDouble();
+        min_distance = minDistance;
+        for (i=0; i<=4; i++) 
+        {
+          distance = gSonarAreaAvg[i]; 
+          if (distance < min_distance) {
+            min_distance = distance;
+          }
+        }
+        distance = min_distance;
+        lCount = 5;
+      }
+      if (distance < minDistance) 
       {
         lTimout = 0;
       }
@@ -121,7 +137,7 @@ void loop()
     }
     turnMotorOff();
     // u-turn (deadlock)
-    if ((distance < 5) || (lCount<=3)) {
+    if ((distance < 50) || (lCount<=3)) {
       Serial.println("FAIL: MOTION DEADLOCK!");
       turnMotorOn();
       MOTOR_BACKWARD;
