@@ -4,6 +4,12 @@
 //                                                                  //
 //    https://github.com/iotool/arduino/tree/master/atmega328p/     //
 //////////////////////////////////////////////////////////////////////
+// 
+// background task speed sensor
+// background task auto stop
+// 
+// 2018-03-26  refactoring
+// 
 
 #include "TimerOne.h"
 

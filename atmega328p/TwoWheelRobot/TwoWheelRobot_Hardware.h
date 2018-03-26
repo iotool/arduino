@@ -5,6 +5,13 @@
 //    https://github.com/iotool/arduino/tree/master/atmega328p/     //
 //////////////////////////////////////////////////////////////////////
 // 
+// low level motor interface
+// low level servo interface
+// low level led interface
+// 
+// 2018-03-26  refactoring
+// 
+
 // ___Hardware___
 // controller : Arduino Uno Rev3 ATmega328P
 // shield     : Arduino Sensor Shield v5.0
@@ -46,7 +53,7 @@
 #define CFG_TASK_TIMESLOTS      2  /* number (multitasking) */
 #define CFG_SERIAL_BAUD      9600  /* baud (serial) */
 #define PIN_LED_BUILTIN        13  /* LED ATmega328P */
-#define CFG_MOTOR_SLOWLY    50000  /* micros */
+#define CFG_MOTOR_SLOWLY    35000  /* micros */
 #define CFG_MOTOR_BLOCKED  125000  /* micros (autostop) */
 #define PIN_MOTOR_L_BACK        5  /* L298N DC-Motor (left) */ 
 #define PIN_MOTOR_L_DRIVE       6  /* L298N DC-Motor (left) */ 
