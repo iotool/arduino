@@ -15,6 +15,7 @@ typedef struct {
   unsigned pushButton:1;                // flag push button
   unsigned toggleMode:1;                // flag toggle enabled
   unsigned :6;                          // reserved (8 bit aligned)
+  uint8_t  userData[5];                 // free to use
 } tResetSafeMemory;
 
 tResetSafeMemory gResetSafeMemory \
@@ -72,12 +73,17 @@ void InitResetSafeMemory()
   if (gResetSafeMemory.initMemory != RESET_BUTTON_MAGIC) 
   {
     // poweron
-    gResetSafeMemory.initMemory = RESET_BUTTON_MAGIC;
-    gResetSafeMemory.uptimePrev = 0;
-    gResetSafeMemory.sketchMode = 0;
-    gResetSafeMemory.resetCount = 0;
-    gResetSafeMemory.pushButton = 0;
-    gResetSafeMemory.toggleMode = 1;
+    gResetSafeMemory.initMemory  = RESET_BUTTON_MAGIC;
+    gResetSafeMemory.uptimePrev  = 0;
+    gResetSafeMemory.sketchMode  = 0;
+    gResetSafeMemory.resetCount  = 0;
+    gResetSafeMemory.pushButton  = 0;
+    gResetSafeMemory.toggleMode  = 1;
+    gResetSafeMemory.userData[0] = 0;
+    gResetSafeMemory.userData[1] = 0;
+    gResetSafeMemory.userData[2] = 0;
+    gResetSafeMemory.userData[3] = 0;
+    gResetSafeMemory.userData[4] = 0;
   } 
   else 
   {
@@ -129,3 +135,4 @@ void RefreshResetSafeMemory()
     }
   }
 }
+
