@@ -56,3 +56,13 @@
 #define ADC_PRESCALE_32   ADCSRA|=((1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0));ADCSRA^=((2<<ADPS2)|(0<<ADPS0))
 #define ADC_PRESCALE_64   ADCSRA|=((1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0));ADCSRA^=((2<<ADPS2)|(1<<ADPS1))
 #define ADC_PRESCALE_128  ADCSRA|=((1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0));ADCSRA^=((2<<ADPS1)|(1<<ADPS1)|(1<<ADPS0))
+
+// disable hardware features
+
+#define PRR               _SFR_IO8(0x25)
+#define PRADC             0
+#define PRTIM0            1
+
+#define ADC_DISABLED      ADCSRA&=~(1<<ADEN);PRR|=(1<<PRADC)
+#define ACD_DISABLED      ACSR=(1<<ACD)
+#define TIMER0_DISABLED   PRR|=(1<<PRTIM0)
