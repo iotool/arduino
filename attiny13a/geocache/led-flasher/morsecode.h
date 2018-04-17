@@ -30,11 +30,35 @@ uint8_t getMorseCode(uint8_t pCode)
 #define MC_E 13
 #define MC_W 14
 
-// 4 words per minute
-#define MORSE_DELAY_DIT         _delay_ms(300)
-#define MORSE_DELAY_DAH         _delay_ms(600)
-#define MORSE_DELAY_NEXT        _delay_ms(300)
-#define MORSE_DELAY_NEXT_SPACE  _delay_ms(600)
-#define MORSE_DELAY_NEXT_WORD   _delay_ms(1200)
-#define MORSE_DELAY_SPACE       _delay_ms(900)
-#define MORSE_DELAY_WORD        _delay_ms(2100)
+// 8 words per minute 1.2 MHz / 150 kHz / 37.5 kHz
+#ifndef MORSE_PRESCALE
+  #define MORSE_PRESCALE 8
+#endif
+#if MORSE_PRESCALE == 64
+  #define MORSE_DELAY_DIT         _delay_ms(20)
+  #define MORSE_DELAY_DAH         _delay_ms(48)
+  #define MORSE_DELAY_NEXT        _delay_ms(24)
+  #define MORSE_DELAY_NEXT_SPACE  _delay_ms(48)
+  #define MORSE_DELAY_NEXT_WORD   _delay_ms(96)
+  #define MORSE_DELAY_SPACE       _delay_ms(72)
+  #define MORSE_DELAY_WORD        _delay_ms(168)
+  #define MORSE_DELAY_2S          _delay_ms(300)
+#elif MORSE_PRESCALE == 256
+  #define MORSE_DELAY_DIT         _delay_ms(5)
+  #define MORSE_DELAY_DAH         _delay_ms(12)
+  #define MORSE_DELAY_NEXT        _delay_ms(6)
+  #define MORSE_DELAY_NEXT_SPACE  _delay_ms(12)
+  #define MORSE_DELAY_NEXT_WORD   _delay_ms(64)
+  #define MORSE_DELAY_SPACE       _delay_ms(18)
+  #define MORSE_DELAY_WORD        _delay_ms(42)
+  #define MORSE_DELAY_2S          _delay_ms(75)
+#elif MORSE_PRESCALE == 8
+  #define MORSE_DELAY_DIT         _delay_ms(160)
+  #define MORSE_DELAY_DAH         _delay_ms(384)
+  #define MORSE_DELAY_NEXT        _delay_ms(192)
+  #define MORSE_DELAY_NEXT_SPACE  _delay_ms(384)
+  #define MORSE_DELAY_NEXT_WORD   _delay_ms(768)
+  #define MORSE_DELAY_SPACE       _delay_ms(576)
+  #define MORSE_DELAY_WORD        _delay_ms(1344)
+  #define MORSE_DELAY_2S          _delay_ms(2400)
+#endif 
