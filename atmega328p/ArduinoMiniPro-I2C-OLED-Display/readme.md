@@ -4,6 +4,9 @@ Examples:
 
 * Arduino-I2C-Scanner-LED111Blinkcode = detect i2c address and display as led blinkcode
 
+|| Display || W x H || Top ||
+| 0.96 OLED Yellow-Blue | 128 x 64 | 128 x 16 |
+
 ## Adafruit Library (SSD1306, GFX, BusIO)
 
 Download Github Libraries:
