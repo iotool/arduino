@@ -2,7 +2,8 @@
 
 Examples:
 
-* Arduino-I2C-Scanner-LED111Blinkcode = detect i2c address and display as led blinkcode
+* Arduino-I2C-Scanner-LED111Blinkcode (detect i2c address and display as led blinkcode)
+* Arduino-I2C-OLED-0x96-LayoutText (different text layouts for OLED 0.96'' display)
 
 | Display | W x H | Top |
 | --- | --- | --- |
