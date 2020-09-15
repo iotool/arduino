@@ -28,7 +28,7 @@ Die Erkennung funktioniert auch bei ungünstigen Lichtverhältnissen. Nur bei di
 
 ## Anwendung Helligkeit
 
-Mit einer LED kann die Helligkeit der Umgebung erkannt werden. Bei direktem Sonnenlicht gibt es kaum noch Schwankungen.
+Mit einer LED kann die Helligkeit der Umgebung erkannt werden. Bei direktem Sonnenlicht gibt es kaum noch Schwankungen, weshalb der Messwert von 1800 auf 100 fällt.
 
 ![Helligkeit](https://github.com/iotool/arduino/blob/master/atmega328p/Arduino-LED-Sensor/Arduino-LED-Sensor_Lx-compare.png)
 
