@@ -25,3 +25,11 @@ Mit einer LED kann ein Blinkcode erkannt werden. Viele Taschenlampen unterstütz
 ![Blinklicht](https://github.com/iotool/arduino/blob/master/atmega328p/Arduino-LED-Sensor/Arduino-LED-Sensor_L4-room-light.png)
 
 Die Erkennung funktioniert auch bei ungünstigen Lichtverhältnissen. Nur bei direkter Sonneneinstrahlung auf die LED ist das Blinklicht zu schwach, um erkannt zu werden.
+
+## Anwendung Helligkeit
+
+Mit einer LED kann die Helligkeit der Umgebung erkannt werden. Bei direktem Sonnenlicht gibt es kaum noch Schwankungen.
+
+![Helligkeit](https://github.com/iotool/arduino/blob/master/atmega328p/Arduino-LED-Sensor/Arduino-LED-Sensor_Lx-compare.png)
+
+Der ermittelte Helligkeitswert (rote Linie) entspricht der Summe der Schwankungen. Bei Dunkelheit erzeugt die LED keine Spannung bzw. Strom, wodurch das Umschalten zwischen LOW/HIGH-Werten am ADC-Pin maximale Schwankungswerte ergeben und der Messwert für die Varianz am höchten ist. Bei direktem Sonnenlicht ist die Leistung der LED als Entergiequelle am höchsten und die Schwankungen am ADC-Pin werden fast vollständig geklättet, d.h. der Messwert für die Varianz ist am geringsten.
