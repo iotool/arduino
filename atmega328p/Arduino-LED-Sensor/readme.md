@@ -17,3 +17,11 @@ Mit einer LED können Daten per Morsecode an den Microcontroller übertragen wer
 ![Morsen](https://github.com/iotool/arduino/blob/master/atmega328p/Arduino-LED-Sensor/Arduino-LED-Sensor-Morse3.png?raw=true)
 
 Das Beispiel zeigt die das Muster für die Ziffer 3 (Morsecode ..---) mit der Geschwindigkeit drei Worte pro Minute.
+
+## Anwendung Blinkcode
+
+Mit einer LED kann ein Blinkcode erkannt werden. Viele Taschenlampen unterstützen einen Blinkcode mit z.B. 12 Herz.
+
+![Blinklicht](https://github.com/iotool/arduino/blob/master/atmega328p/Arduino-LED-Sensor/Arduino-LED-Sensor_L4-room-light.png)
+
+Die Erkennung funktioniert auch bei ungünstigen Lichtverhältnissen. Nur bei direkter Sonneneinstrahlung auf die LED ist das Blinklicht zu schwach, um erkannt zu werden.
