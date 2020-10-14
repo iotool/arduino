@@ -1,6 +1,6 @@
 # Payload ZIP-File
 
-## create payload
+## create c code for payload
 
 * test.txt - uncompress file(s)
 * test.zip - compressed file
@@ -8,7 +8,7 @@
 * test.hex - hex file
 * test.c - manually converted c code
 
-## create payload
+## decode payload to zip file
 
 * file.hex - playload
 * file2hex.cmd - convert hex to binary
