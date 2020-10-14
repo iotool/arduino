@@ -1,0 +1,111 @@
+// KeyboardZipFile
+// 
+// Start notepad and stream binary as hex values.
+// Convert hex text to binary zip by CertUtil.
+
+#include "Keyboard.h"
+#define KEY_ENTER 176
+
+void setup() {
+  Keyboard.begin();
+  delay(10000);
+
+  // execute
+  Keyboard.press(KEY_LEFT_GUI);
+  Keyboard.press('r');
+  Keyboard.releaseAll();
+  delay(1000);
+
+  // notepad
+  Keyboard.print("notepad");
+  Keyboard.press(KEY_ENTER);
+  Keyboard.releaseAll();
+  delay(1000);
+
+  // info
+  Keyboard.println("CertUtil -decodehex file.hex file.zip"); // EN
+  Keyboard.println("CertUtil /decodehex file.hex file.yip"); // DE
+  Keyboard.releaseAll();
+  delay(500);
+
+  // 
+  hexFileProgMem();
+}
+
+void loop() {
+  delay(1);
+}
+
+#define FILE_SIZE_BYTE 161
+
+const uint8_t gFileProgMem[] PROGMEM = {
+  0x50 ,0x4b ,0x03 ,0x04 ,0x0a ,0x00 ,0x00 ,0x00  ,0x00 ,0x00 ,0x56 ,0x69 ,0x4e ,0x51 ,0x85 ,0x11
+ ,0x4a ,0x0d ,0x0b ,0x00 ,0x00 ,0x00 ,0x0b ,0x00  ,0x00 ,0x00 ,0x08 ,0x00 ,0x00 ,0x00 ,0x74 ,0x65
+ ,0x73 ,0x74 ,0x2e ,0x74 ,0x78 ,0x74 ,0x68 ,0x65  ,0x6c ,0x6c ,0x6f ,0x20 ,0x77 ,0x6f ,0x72 ,0x6c
+ ,0x64 ,0x50 ,0x4b ,0x01 ,0x02 ,0x3f ,0x00 ,0x0a  ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x56 ,0x69 ,0x4e
+ ,0x51 ,0x85 ,0x11 ,0x4a ,0x0d ,0x0b ,0x00 ,0x00  ,0x00 ,0x0b ,0x00 ,0x00 ,0x00 ,0x08 ,0x00 ,0x24
+ ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x20  ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x74
+ ,0x65 ,0x73 ,0x74 ,0x2e ,0x74 ,0x78 ,0x74 ,0x0a  ,0x00 ,0x20 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x01
+ ,0x00 ,0x18 ,0x00 ,0x00 ,0x52 ,0xde ,0xa8 ,0x1a  ,0xa2 ,0xd6 ,0x01 ,0x00 ,0x70 ,0x0a ,0x32 ,0xac
+ ,0xa1 ,0xd6 ,0x01 ,0x60 ,0x5c ,0xda ,0xa1 ,0x1a  ,0xa2 ,0xd6 ,0x01 ,0x50 ,0x4b ,0x05 ,0x06 ,0x00
+ ,0x00 ,0x00 ,0x00 ,0x01 ,0x00 ,0x01 ,0x00 ,0x5a  ,0x00 ,0x00 ,0x00 ,0x31 ,0x00 ,0x00 ,0x00 ,0x00
+ ,0x00
+};
+
+char hex2chr(uint8_t hex) {
+  char chr;
+  uint8_t low = hex & 0b00001111;
+  switch(low) {
+    case  0: chr = '0'; break;
+    case  1: chr = '1'; break;
+    case  2: chr = '2'; break;
+    case  3: chr = '3'; break;
+    case  4: chr = '4'; break;
+    case  5: chr = '5'; break;
+    case  6: chr = '6'; break;
+    case  7: chr = '7'; break;
+    case  8: chr = '8'; break;
+    case  9: chr = '9'; break;
+    case 10: chr = 'a'; break;
+    case 11: chr = 'b'; break;
+    case 12: chr = 'c'; break;
+    case 13: chr = 'd'; break;
+    case 14: chr = 'e'; break;
+    case 15: chr = 'f'; break;
+    default: chr = ' '; break;
+  }
+  return chr;
+}
+
+void hexFileProgMem() {
+  uint16_t filesize = FILE_SIZE_BYTE;
+  uint16_t filepos = 0;
+  uint8_t  columnpos = 0;
+  uint8_t  cellvalue;
+  char     cellhi;
+  char     celllo;
+  while(filesize >= 1) {
+    cellvalue = pgm_read_byte_near(gFileProgMem + filepos);
+    celllo = hex2chr(cellvalue);
+    cellvalue = cellvalue >> 4;
+    cellhi = hex2chr(cellvalue);
+    filesize--;
+    filepos++;
+    columnpos++;
+    if (columnpos > 1) {
+      Keyboard.print(" ");
+    }
+    if (columnpos == 9) {
+      Keyboard.print(" ");
+    }
+    Keyboard.print(cellhi);
+    if (columnpos == 16) {
+      Keyboard.println(celllo);
+    } else {
+      Keyboard.print(celllo);
+    }
+    if (columnpos >= 16) {
+      columnpos = 0;
+    }
+  }
+}
